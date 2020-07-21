@@ -4,22 +4,17 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/flights")
 public class flightController {
 
     static class Flight {
-        public Flight(int id, Date departs, List<Ticket> tickets) {
+        public Flight(Date departs, List<Ticket> tickets) {
             this.id = id;
             this.departs = departs;
             this.tickets = tickets;
@@ -60,18 +55,16 @@ public class flightController {
     }
 
     static class Ticket {
-        public Ticket(int id, List<Passenger> passengers, int price) {
+        public Ticket(Passenger passenger, int price) {
             this.id = id;
-
-            this.passengers = passengers;
-
+            this.passenger = passenger;
             this.price = price;
         }
 
         @JsonIgnore
         private int id;
-        @JsonProperty("Passengers")
-        private List<Passenger> passengers;
+        @JsonProperty("Passenger")
+        private Passenger passenger;
         @JsonProperty("Price")
         private int price;
 
@@ -83,12 +76,12 @@ public class flightController {
             this.id = id;
         }
 
-        public List<Passenger> getPassengers() {
-            return passengers;
+        public Passenger getPassenger() {
+            return this.passenger;
         }
 
-        public void setPassengers(List<Passenger> passengers) {
-            this.passengers = passengers;
+        public void setPassenger(Passenger passenger) {
+            this.passenger = passenger;
         }
 
         public int getPrice() {
@@ -103,7 +96,7 @@ public class flightController {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     static class Passenger {
-        public Passenger(int id, String firstName, String lastName) {
+        public Passenger(String firstName, String lastName) {
             this.firstName = firstName;
             this.lastName = lastName;
             this.id = id;
@@ -142,20 +135,34 @@ public class flightController {
     }
     @GetMapping("/flight")
     public Flight getFlight(){
-        Passenger pass1 = new Passenger(1,"some name", "some last name");
-        Passenger pass2 = new Passenger(2,"a first name", null);
-        Ticket tick1 = new Ticket(1, Arrays.asList(pass1, pass2), 200);
-        Flight flt1 = new Flight(1,new Date(), Collections.singletonList(tick1));
+        Passenger pass1 = new Passenger("some name", "some last name");
+        Passenger pass2 = new Passenger("a first name", null);
+        Ticket tick1 = new Ticket(pass1, 200);
+        Ticket tick2 = new Ticket(pass2, 170);
+
+        Flight flt1 = new Flight(new Date(), Arrays.asList(tick1,tick2));
         return flt1;
     }
 
     @GetMapping("/")
     public List getFlights(){
-        Passenger pass1 = new Passenger(1,"some name", "some last name");
-        Passenger pass2 = new Passenger(2,"a first name", null);
-        Ticket tick1 = new Ticket(1, Arrays.asList(pass1, pass2), 200);
-        Flight flt1 = new Flight(1,new Date(), Collections.singletonList(tick1));
-        Flight flt2 = new Flight(2,new Date(), Collections.singletonList(tick1));
+        Passenger pass1 = new Passenger("some name", "some last name");
+        Passenger pass2 = new Passenger("a first name", null);
+        Ticket tick1 = new Ticket(pass1, 200);
+        Ticket tick2 = new Ticket(pass2, 170);
+        Flight flt1 = new Flight(new Date(), Collections.singletonList(tick1));
+        Flight flt2 = new Flight(new Date(), Collections.singletonList(tick1));
         return Arrays.asList(flt1,flt2);
+    }
+
+    @PostMapping("/tickets/total")
+    public Object postTickTotal(@RequestBody Flight flt){
+        HashMap output= new HashMap();
+        int sum = 0;
+        for (Ticket tick : flt.getTickets()) {
+            sum += tick.getPrice();
+        }
+        output.put("result",sum);
+        return output;
     }
 }
